@@ -22,8 +22,3 @@ main_frame = stonks.fetch_and_aggregate_data(symbols,token)
 # # Summarize the data
 # summary = main_frame.describe(include='all')
 
-# # TODO create pandas filters for dataframe 
-# band_phylter_00 = (main_frame['quote_closePrice'] <= 1 ) & (main_frame['quote_closePrice'] >=0)
-# band_phylter_01 = (main_frame['quote_closePrice'] <= 2 ) & (main_frame['quote_closePrice'] >=1)
-# band_phylter_02 = (main_frame['quote_closePrice'] <= 3 ) & (main_frame['quote_closePrice'] >=2)
-
