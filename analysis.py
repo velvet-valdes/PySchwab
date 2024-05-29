@@ -3,10 +3,6 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# from sklearn_pandas import DataFrameMapper
-# from sklearn.preprocessing import StandardScaler
-# from sklearn.impute import SimpleImputer
-
 # Token Usage - find a way to figure out expiry?
 token = stonks.get_bearer_token()
 
@@ -17,8 +13,8 @@ symbols = stonks.csv_to_list('input', 500)
 main_frame = stonks.fetch_and_aggregate_data(symbols,token)
 
 # # Process data types for data frame
-# stonks.prepare_data_frame(main_frame)
+stonks.prepare_data_frame(main_frame)
 
 # # Summarize the data
-# summary = main_frame.describe(include='all')
+summary = main_frame.describe(include='all')
 
