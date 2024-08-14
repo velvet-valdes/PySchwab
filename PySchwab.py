@@ -11,11 +11,26 @@ def json_to_dataframe(json_data):
     """
     Converts a JSON object containing multiple ticker symbols into a pandas DataFrame.
 
+    The function processes each ticker symbol's data, flattens any nested structures,
+    and then compiles all the data into a DataFrame. Each row in the DataFrame corresponds
+    to a ticker symbol, and columns represent the various data points associated with each symbol.
+
     Args:
-        json_data (dict): JSON object with multiple ticker symbol data.
+        json_data (dict): JSON object containing data for multiple ticker symbols.
 
     Returns:
-        pd.DataFrame: DataFrame containing all the data from the JSON object.
+        pd.DataFrame: A DataFrame containing all the data from the JSON object, with one row per symbol.
+
+    Example:
+        >>> json_data = {
+        ...     "AAPL": {"price": 150, "volume": 10000},
+        ...     "GOOG": {"price": 2700, "volume": 2000}
+        ... }
+        >>> df = json_to_dataframe(json_data)
+        >>> print(df.head())
+           price  volume symbol
+        0  150     10000  AAPL
+        1  2700     2000  GOOG
     """
     # Initialize an empty list to collect rows
     rows = []
@@ -55,11 +70,15 @@ def csv_to_list(directory, list_length=10):
     with each inner list containing stock ticker symbols up to the specified length.
 
     Args:
-    directory (str): The directory containing CSV files.
-    list_length (int): The desired length of each inner list of ticker symbols.
+        directory (str): The directory containing CSV files.
+        list_length (int): The desired length of each inner list of ticker symbols. Defaults to 10.
 
     Returns:
-    list of lists: A list where each inner list contains ticker symbols up to the specified length.
+        list[list[str]]: A list where each inner list contains ticker symbols up to the specified length.
+
+    Example:
+        >>> csv_to_list('/path/to/csv/files', list_length=5)
+        [['AAPL', 'GOOG', 'MSFT', 'TSLA', 'AMZN'], ['FB', 'NFLX', 'NVDA']]
     """
     all_tickers = []
     
@@ -79,6 +98,23 @@ def csv_to_list(directory, list_length=10):
     return all_tickers
 
 def get_bearer_token():
+    """
+    Retrieves a bearer token from the Schwab API using client credentials.
+
+    The function uses the client ID and client secret stored in environment variables 
+    to request an OAuth 2.0 bearer token from the Schwab API.
+
+    Returns:
+        str: The OAuth 2.0 bearer token as a string.
+
+    Raises:
+        requests.exceptions.HTTPError: If the request for the bearer token fails.
+
+    Example:
+        >>> token = get_bearer_token()
+        >>> print(token)
+        'eyJhbGciOiJSUzI1NiIs...'
+    """
     # Retrieve client ID and client secret from environment variables
     client_id = os.getenv('SCHWAB_CLIENT_ID')
     client_secret = os.getenv('SCHWAB_CLIENT_SECRET')
@@ -117,12 +153,25 @@ def fetch_and_aggregate_data(symbols, token):
     """
     Fetches and aggregates market data for a list of stock symbols.
 
-    Parameters:
-        symbols (list): A list of lists containing stock symbols.
+    This function makes API calls to the Schwab API to retrieve market data 
+    for each stock symbol provided, aggregates the results, and returns them 
+    as a Pandas DataFrame.
+
+    Args:
+        symbols (list[list[str]]): A list of lists, where each inner list contains stock symbols.
         token (str): The bearer token for API authentication.
 
     Returns:
-        pd.DataFrame: A DataFrame containing the aggregated data.
+        pd.DataFrame: A DataFrame containing the aggregated market data.
+
+    Raises:
+        requests.exceptions.RequestException: If an error occurs during the API request.
+
+    Example:
+        >>> symbols = [['AAPL', 'GOOG'], ['MSFT', 'TSLA']]
+        >>> token = get_bearer_token()
+        >>> df = fetch_and_aggregate_data(symbols, token)
+        >>> print(df.head())
     """
     base_url = "https://api.schwabapi.com/marketdata/v1/quotes"
     combined_responses = {}
@@ -157,6 +206,27 @@ def fetch_and_aggregate_data(symbols, token):
     return json_to_dataframe(combined_responses)
 
 def create_pairwise_plot(df):
+    """
+    Creates a pairwise plot of numeric columns in the provided DataFrame.
+
+    The function filters the DataFrame to include only numeric columns and 
+    then generates a pairwise plot using Seaborn to visualize the relationships 
+    between these columns.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the data to be plotted.
+
+    Returns:
+        None
+
+    Example:
+        >>> data = pd.DataFrame({
+        ...     'A': [1, 2, 3, 4],
+        ...     'B': [5, 6, 7, 8],
+        ...     'C': ['a', 'b', 'c', 'd']
+        ... })
+        >>> create_pairwise_plot(data)
+    """
     # Filter columns to include only numeric types
     numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
     if not numeric_cols:
@@ -167,18 +237,32 @@ def create_pairwise_plot(df):
     sns.pairplot(df[numeric_cols])
     plt.show()
 
-
 def prepare_data_frame(df):
     """
-    Sets the DataFrame index, converts specific columns to appropriate data types,
-    ensures that the data frame columns have the correct types for further analysis,
-    performs Z-score standardization, and creates dummy variables for specified categorical columns.
+    Prepares the DataFrame for analysis by performing several key transformations:
 
-    Parameters:
+    1. Sets the DataFrame index to 'symbol' if it exists.
+    2. Converts specific columns to appropriate data types (e.g., datetime, boolean, category).
+    3. Handles special formatting for certain columns like 'ssid' and large integers.
+    4. Standardizes numeric columns using Z-score standardization.
+    5. Creates dummy variables for specified categorical columns, while handling cases 
+       where a column has only one unique value.
+
+    Args:
         df (pd.DataFrame): The DataFrame to modify.
 
     Returns:
-        None: Modifies the DataFrame in place.
+        None: The function modifies the DataFrame in place.
+
+    Example:
+        >>> data = pd.DataFrame({
+        ...     'symbol': ['AAPL', 'GOOG'],
+        ...     'fundamental_declarationDate': ['2024-08-01', '2024-08-05'],
+        ...     'reference_isHardToBorrow': [True, False],
+        ...     'reference_otcMarketTier': ['OTCQB', 'OTCQX'],
+        ...     'reference_htbRate': [1.5, 2.1]
+        ... })
+        >>> prepare_data_frame(data)
     """
     # Set index for the data frame
     if 'symbol' in df.columns:
@@ -249,6 +333,33 @@ Column '{col}' has a single unique value: '{unique_value}', creating a constant 
                 df.drop(columns=[col], inplace=True)
 
 def log_transform(df, columns):
+    """
+    Applies a natural logarithm transformation to specified numeric columns in the DataFrame.
+
+    The function creates new columns in the DataFrame with the '_log' suffix for each 
+    specified column. Any zero values in the original columns are replaced with NaN 
+    before applying the logarithm, and rows with NaN values are dropped from the 
+    transformed columns.
+
+    Args:
+        df (pd.DataFrame): The original DataFrame containing the data to be transformed.
+        columns (list[str]): A list of column names to apply the logarithm transformation to.
+
+    Returns:
+        pd.DataFrame: A new DataFrame with the original data and the newly transformed columns.
+
+    Example:
+        >>> data = pd.DataFrame({
+        ...     'A': [1, 10, 100],
+        ...     'B': [0, 5, 20]
+        ... })
+        >>> transformed_data = log_transform(data, ['A', 'B'])
+        >>> print(transformed_data.head())
+           A   B  A_log  B_log
+        0  1   0    0.0    NaN
+        1  10  5    2.3    1.6
+        2  100 20   4.6    3.0
+    """
     transformed_df = df.copy()
     for col in columns:
         if np.issubdtype(df[col].dtype, np.number):
@@ -256,6 +367,33 @@ def log_transform(df, columns):
     return transformed_df
 
 def log_transform_all(df):
+    """
+    Applies a natural logarithm transformation to all numeric columns in the DataFrame 
+    that contain only positive values.
+
+    The function creates new columns in the DataFrame with the '_log' suffix for each 
+    numeric column that is eligible for logarithm transformation. Columns with non-positive 
+    values are skipped.
+
+    Args:
+        df (pd.DataFrame): The original DataFrame containing the data to be transformed.
+
+    Returns:
+        pd.DataFrame: A new DataFrame with the original data and the newly transformed columns.
+
+    Example:
+        >>> data = pd.DataFrame({
+        ...     'A': [1, 10, 100],
+        ...     'B': [0, 5, 20],
+        ...     'C': [2, 3, 4]
+        ... })
+        >>> transformed_data = log_transform_all(data)
+        >>> print(transformed_data.head())
+           A   B  C  A_log  C_log
+        0  1   0  2   0.0    0.7
+        1  10  5  3   2.3    1.1
+        2  100 20  4   4.6    1.4
+    """
     transformed_df = df.copy()
     for col in df.select_dtypes(include=[np.number]).columns:
         print(f"Processing column: {col}")  # Debugging: print column name
@@ -265,3 +403,9 @@ def log_transform_all(df):
         else:
             print(f"Skipping column: {col} (contains non-positive values)")  # Debugging: print skipped column
     return transformed_df
+
+def square_root_transform(df, columns):
+    pass # use this function to apply changes in place
+
+def inverse_square_root_transform(df, columns):
+    pass # use this function to apply changes in place
