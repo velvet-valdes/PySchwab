@@ -1,7 +1,4 @@
 import PySchwab as stonks
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
 
 # Token Usage - find a way to figure out expiry?
 token = stonks.get_bearer_token()

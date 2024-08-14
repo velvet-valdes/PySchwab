@@ -58,8 +58,8 @@ def json_to_dataframe(json_data):
     # Convert the list of dictionaries to a DataFrame
     df = pd.DataFrame(rows)
     
-    # Set a consistent order for DataFrame columns, if necessary
-    column_order = sorted(df.columns)  # Optional: Define a specific order based on your needs
+    # Set a consistent order for DataFrame columns
+    column_order = sorted(df.columns)
     df = df[column_order]
 
     return df
