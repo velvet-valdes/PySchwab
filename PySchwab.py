@@ -423,6 +423,33 @@ def inverse_square_root_transform(df, columns):
 
 
 def zscore_transform(df):
+    """
+    Applies Z-score standardization to all numeric columns in the DataFrame.
+
+    The function standardizes each numeric column by subtracting the mean and dividing 
+    by the standard deviation, resulting in columns with a mean of 0 and a standard 
+    deviation of 1.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the data to be standardized.
+
+    Returns:
+        pd.DataFrame: The DataFrame with Z-score standardized numeric columns.
+
+    Example:
+        >>> data = pd.DataFrame({
+        ...     'A': [1, 2, 3, 4, 5],
+        ...     'B': [10, 20, 30, 40, 50]
+        ... })
+        >>> standardized_data = zscore_transform(data)
+        >>> print(standardized_data.head())
+              A         B
+        0 -1.264911 -1.264911
+        1 -0.632456 -0.632456
+        2  0.000000  0.000000
+        3  0.632456  0.632456
+        4  1.264911  1.264911
+    """
     # Perform Z-score standardization on numeric columns
     numeric_cols = df.select_dtypes(include=["float64", "int64", "Int64"]).columns
     df[numeric_cols] = df[numeric_cols].apply(lambda x: (x - x.mean()) / x.std())
