@@ -27,6 +27,10 @@ sub_frame_columns = [
     "regular_regularMarketLastPrice",
     "fundamental_eps",
     "fundamental_divYield",
+    "fundamental_peRatio",
+    "fundamental_divPayAmount",
+    "quote_52WeekHigh",
+    "quote_52WeekLow"
 ]
 sub_frame = main_frame[sub_frame_columns]
 
